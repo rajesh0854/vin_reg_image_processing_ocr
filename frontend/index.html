@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Analysis System</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-wrapper">
+        <div class="background-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+            <div class="shape shape-4"></div>
+        </div>
+        
+        <header class="main-header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo-title">
+                        <div class="logo-container">
+                            <div class="logo">
+                                <i class="fas fa-image"></i>
+                            </div>
+                            <div class="logo-accent"></div>
+                        </div>
+                        <h1>Image Analysis System</h1>
+                    </div>
+                    <p>Advanced image processing for authenticity verification and text recognition</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="config-bar">
+            <div class="container">
+                <div class="config-options">
+                    <div class="config-dropdowns">
+                        <div class="setting-group">
+                            <label for="vehicle-type">Vehicle:</label>
+                            <select id="vehicle-type">
+                                <option value="2w" selected>Two Wheeler (2W)</option>
+                                <option value="4w">Four Wheeler (4W)</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label for="check-type">Check:</label>
+                            <select id="check-type">
+                                <option value="vin">VIN</option>
+                                <option value="reg" selected>Registration</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="config-checkboxes">
+                        <div class="option-group">
+                            <input type="checkbox" id="save-img">
+                            <label for="save-img">Save Images</label>
+                        </div>
+                        <div class="option-group">
+                            <input type="checkbox" id="save-data">
+                            <label for="save-data">Save Data</label>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-btn-container">
+                        <button id="upload-btn" class="upload-btn">
+                            <i class="fas fa-cloud-upload-alt"></i> Upload Images
+                        </button>
+                        <span class="max-limit-badge">Max <span id="max-files-limit">10</span></span>
+                        <input type="file" id="file-input" accept="image/*" multiple hidden>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button id="process-btn" class="primary-btn" disabled><i class="fas fa-cogs"></i> Process</button>
+                        <button id="clear-btn" class="secondary-btn"><i class="fas fa-trash"></i> Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <div class="container full-width">
+                <div class="upload-status" id="upload-status">
+                    <div class="upload-status-header">
+                        <h2><i class="fas fa-file-image"></i> Selected Images</h2>
+                        <span class="selected-count" id="selected-count">0 files selected</span>
+                    </div>
+                    <div class="upload-status-area" id="upload-status-area">
+                        <div class="empty-state" id="empty-state">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>No images selected. Click "Upload Images" to select files.</p>
+                        </div>
+                        <div class="selected-files-list" id="selected-files-list"></div>
+                    </div>
+                </div>
+                
+                <section class="results-section" id="results-section" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-bar"></i> Analysis Results</h2>
+                            <div class="stats-badges">
+                                <div class="stats-badge total">
+                                    <span id="total-images">0</span> Total
+                                </div>
+                                <div class="stats-badge pass">
+                                    <span id="passed-images">0</span> Passed
+                                </div>
+                                <div class="stats-badge fail">
+                                    <span id="failed-images">0</span> Failed
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="results-container" id="results-container">
+                            <!-- Results will be displayed here -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer class="main-footer">
+            <div class="container">
+                <div class="footer-content">
+                    <p>Image Processing System &copy; 2023</p>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">Terms</a>
+                        <a href="#" class="footer-link">Privacy</a>
+                        <a href="#" class="footer-link">Support</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="scanner-animation">
+            <div class="document-outline"></div>
+            <div class="scan-line"></div>
+            <div class="scan-spot"></div>
+        </div>
+        <p>Processing images...</p>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html> 

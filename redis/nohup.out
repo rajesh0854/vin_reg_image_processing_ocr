@@ -1,0 +1,25 @@
+
+417449:signal-handler (1672999685) Received SIGTERM scheduling shutdown...
+1417449:M 06 Jan 2023 10:08:05.546 # User requested shutdown...
+1417449:M 06 Jan 2023 10:08:05.546 * Saving the final RDB snapshot before exiting.
+1417449:M 06 Jan 2023 10:08:05.547 * DB saved on disk
+1417449:M 06 Jan 2023 10:08:05.547 # Redis is now ready to exit, bye bye...
+2645:C 19 Sep 2023 11:17:45.623 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+2645:C 19 Sep 2023 11:17:45.623 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2645:C 19 Sep 2023 11:17:45.623 * Redis version=7.2.0, bits=64, commit=00000000, modified=0, pid=2645, just started
+2645:C 19 Sep 2023 11:17:45.623 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+2645:M 19 Sep 2023 11:17:45.624 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+2645:M 19 Sep 2023 11:17:45.624 * monotonic clock: POSIX clock_gettime
+2645:M 19 Sep 2023 11:17:45.626 * Running mode=standalone, port=6379.
+2645:M 19 Sep 2023 11:17:45.627 * Server initialized
+2645:M 19 Sep 2023 11:17:45.627 * Loading RDB produced by version 7.2.0
+2645:M 19 Sep 2023 11:17:45.627 * RDB age 100 seconds
+2645:M 19 Sep 2023 11:17:45.627 * RDB memory usage when created 0.90 Mb
+2645:M 19 Sep 2023 11:17:45.627 * Done loading RDB, keys loaded: 2, keys expired: 0.
+2645:M 19 Sep 2023 11:17:45.627 * DB loaded from disk: 0.001 seconds
+2645:M 19 Sep 2023 11:17:45.627 * Ready to accept connections tcp
+2645:M 19 Sep 2023 12:17:46.004 * 1 changes in 3600 seconds. Saving...
+2645:M 19 Sep 2023 12:17:46.005 * Background saving started by pid 8645
+8645:C 19 Sep 2023 12:17:46.020 * DB saved on disk
+8645:C 19 Sep 2023 12:17:46.021 * Fork CoW for RDB: current 0 MB, peak 0 MB, average 0 MB
+2645:M 19 Sep 2023 12:17:46.105 * Background saving terminated with success
