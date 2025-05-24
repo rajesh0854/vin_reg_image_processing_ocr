@@ -273,11 +273,69 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const result = await processImage(selectedFiles[i].file, vehicle, chkType, saveImgValue, saveDataValue);
                 
-                // Display result
+                // Always display result, even if it's unexpected format
                 displayResult(result, selectedFiles[i].file);
                 
-                // Update statistics
-                if (result.result && result.result.includes('pass')) {
+                // Update statistics with improved logic
+                let isPass = false;
+                let isError = false;
+                
+                console.log('Statistics - Raw result data:', result.result, 'Type:', typeof result.result, 'Is Array:', Array.isArray(result.result));
+                
+                if (result.result !== undefined && result.result !== null) {
+                    if (Array.isArray(result.result)) {
+                        // Handle actual JavaScript arrays like ["fail", "incorrect reg value"]
+                        console.log('Statistics - Processing array result:', result.result);
+                        
+                        isPass = result.result.some(item => {
+                            if (typeof item === 'string') {
+                                return item.toLowerCase().includes('pass');
+                            }
+                            return false;
+                        });
+                        
+                        isError = result.result.some(item => {
+                            if (typeof item === 'string') {
+                                return item.toLowerCase().includes('error');
+                            }
+                            return false;
+                        });
+                        
+                    } else if (typeof result.result === 'string') {
+                        if (result.result.trim() !== '') {
+                            // Try to parse as JSON if it looks like an array
+                            if (result.result.trim().startsWith('[') && result.result.trim().endsWith(']')) {
+                                try {
+                                    const parsedResult = JSON.parse(result.result.replace(/'/g, '"'));
+                                    if (Array.isArray(parsedResult)) {
+                                        isPass = parsedResult.some(item => 
+                                            typeof item === 'string' && item.toLowerCase().includes('pass')
+                                        );
+                                        isError = parsedResult.some(item => 
+                                            typeof item === 'string' && item.toLowerCase().includes('error')
+                                        );
+                                    }
+                                } catch (e) {
+                                    console.log('Statistics - JSON parsing failed, using string check:', e);
+                                }
+                            }
+                            
+                            // Check for pass/fail/error in the string
+                            const lowerResult = result.result.toLowerCase();
+                            if (!isPass) isPass = lowerResult.includes('pass');
+                            if (!isError) isError = lowerResult.includes('error');
+                        }
+                    } else {
+                        const resultString = String(result.result);
+                        const lowerResult = resultString.toLowerCase();
+                        isPass = lowerResult.includes('pass');
+                        isError = lowerResult.includes('error');
+                    }
+                }
+                
+                console.log('Statistics - Final processed result:', { isPass, isError, resultValue: result.result });
+                
+                if (isPass) {
                     passedCount++;
                 } else {
                     failedCount++;
@@ -297,7 +355,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             } catch (error) {
                 console.error('Error processing image:', error);
-                showNotification('An error occurred while processing an image.', 'error');
+                
+                // Create an error result to display even when API fails
+                const errorResult = {
+                    result: ['error', 'API call failed'],
+                    image_type: 'unknown',
+                    image_accuracy: 0,
+                    data_accuracy: 0,
+                    read_value: 'N/A',
+                    check_type: chkType,
+                    request_id: 'error_' + Date.now(),
+                    user_id: CONFIG.API.DEFAULTS.USER_ID,
+                    dealer_id: CONFIG.API.DEFAULTS.DEALER_ID,
+                    image_name: selectedFiles[i].file.name,
+                    image_location: 'error'
+                };
+                
+                // Display error result
+                displayResult(errorResult, selectedFiles[i].file);
+                failedCount++;
+                failedImagesEl.textContent = failedCount;
+                
+                showNotification(`Error processing ${selectedFiles[i].file.name}: ${error.message}`, 'error');
             }
         }
         
@@ -309,7 +388,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
         
         // Show completion notification
-        showNotification('All images processed successfully!', 'success');
+        const totalProcessed = passedCount + failedCount;
+        if (totalProcessed === selectedFiles.length) {
+            showNotification('All images processed successfully!', 'success');
+        } else {
+            showNotification(`Processed ${totalProcessed} out of ${selectedFiles.length} images.`, 'warning');
+        }
         
         // Smooth scroll to results section
         document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
@@ -366,18 +450,97 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
+                        // Create a detailed error result for non-200 responses
+                        const errorResult = {
+                            result: ['error', `HTTP ${response.status}: ${response.statusText}`],
+                            image_type: 'unknown',
+                            image_accuracy: 0,
+                            data_accuracy: 0,
+                            read_value: 'N/A',
+                            check_type: chkType,
+                            request_id: 'error_' + Date.now(),
+                            user_id: CONFIG.API.DEFAULTS.USER_ID,
+                            dealer_id: CONFIG.API.DEFAULTS.DEALER_ID,
+                            image_name: file.name,
+                            image_location: 'error'
+                        };
+                        resolve(errorResult);
+                        return;
                     }
                     
-                    const data = await response.json();
-                    resolve(data);
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        // Handle cases where response is not valid JSON
+                        const errorResult = {
+                            result: ['error', 'Invalid JSON response from server'],
+                            image_type: 'unknown',
+                            image_accuracy: 0,
+                            data_accuracy: 0,
+                            read_value: 'N/A',
+                            check_type: chkType,
+                            request_id: 'error_' + Date.now(),
+                            user_id: CONFIG.API.DEFAULTS.USER_ID,
+                            dealer_id: CONFIG.API.DEFAULTS.DEALER_ID,
+                            image_name: file.name,
+                            image_location: 'error'
+                        };
+                        resolve(errorResult);
+                        return;
+                    }
+                    
+                    // Ensure we have a valid result object with all required fields
+                    const normalizedResult = {
+                        result: data.result || ['unknown', 'No result provided'],
+                        image_type: data.image_type || 'unknown',
+                        image_accuracy: data.image_accuracy !== undefined ? data.image_accuracy : 0,
+                        data_accuracy: data.data_accuracy !== undefined ? data.data_accuracy : 0,
+                        read_value: data.read_value !== undefined ? data.read_value : 'N/A',
+                        check_type: data.check_type || chkType,
+                        request_id: data.request_id || 'unknown_' + Date.now(),
+                        user_id: data.user_id || CONFIG.API.DEFAULTS.USER_ID,
+                        dealer_id: data.dealer_id || CONFIG.API.DEFAULTS.DEALER_ID,
+                        image_name: data.image_name || file.name,
+                        image_location: data.image_location || 'unknown'
+                    };
+                    
+                    resolve(normalizedResult);
                 } catch (error) {
-                    reject(error);
+                    // Network or other errors
+                    const errorResult = {
+                        result: ['error', error.message || 'Network error'],
+                        image_type: 'unknown',
+                        image_accuracy: 0,
+                        data_accuracy: 0,
+                        read_value: 'N/A',
+                        check_type: chkType,
+                        request_id: 'error_' + Date.now(),
+                        user_id: CONFIG.API.DEFAULTS.USER_ID,
+                        dealer_id: CONFIG.API.DEFAULTS.DEALER_ID,
+                        image_name: file.name,
+                        image_location: 'error'
+                    };
+                    resolve(errorResult);
                 }
             };
             
             reader.onerror = (error) => {
-                reject(error);
+                // File reading error
+                const errorResult = {
+                    result: ['error', 'Could not read image file'],
+                    image_type: 'unknown',
+                    image_accuracy: 0,
+                    data_accuracy: 0,
+                    read_value: 'N/A',
+                    check_type: chkType,
+                    request_id: 'error_' + Date.now(),
+                    user_id: CONFIG.API.DEFAULTS.USER_ID,
+                    dealer_id: CONFIG.API.DEFAULTS.DEALER_ID,
+                    image_name: file.name,
+                    image_location: 'error'
+                };
+                resolve(errorResult);
             };
             
             reader.readAsDataURL(file);
@@ -389,11 +552,89 @@ document.addEventListener('DOMContentLoaded', () => {
         const resultCard = document.createElement('div');
         resultCard.className = 'result-card';
         
+        // Parse and determine result status - simplified and reliable
+        let isPass = false;
+        let isError = false;
+        let resultText = '';
+        
+        // Debug logging
+        console.log('Processing result:', result.result, 'Type:', typeof result.result, 'Is Array:', Array.isArray(result.result));
+        
+        // Handle the result field
+        if (result.result !== undefined && result.result !== null) {
+            if (Array.isArray(result.result)) {
+                // Handle actual JavaScript arrays like ["fail", "incorrect reg value"] or ["pass"]
+                resultText = result.result.join(', ');
+                
+                // Check for pass/fail/error
+                isPass = result.result.some(item => 
+                    typeof item === 'string' && item.toLowerCase().includes('pass')
+                );
+                isError = result.result.some(item => 
+                    typeof item === 'string' && item.toLowerCase().includes('error')
+                );
+                
+            } else if (typeof result.result === 'string') {
+                // Handle string values
+                resultText = result.result;
+                
+                // Try to parse string arrays like "['fail','fake image']"
+                if (result.result.trim().startsWith('[') && result.result.trim().endsWith(']')) {
+                    try {
+                        const parsed = JSON.parse(result.result.replace(/'/g, '"'));
+                        if (Array.isArray(parsed)) {
+                            resultText = parsed.join(', ');
+                            isPass = parsed.some(item => 
+                                typeof item === 'string' && item.toLowerCase().includes('pass')
+                            );
+                            isError = parsed.some(item => 
+                                typeof item === 'string' && item.toLowerCase().includes('error')
+                            );
+                        }
+                    } catch (e) {
+                        // If parsing fails, use original string
+                        console.log('JSON parsing failed, using original string');
+                    }
+                }
+                
+                // Check the string for pass/fail/error
+                const lower = result.result.toLowerCase();
+                if (!isPass) isPass = lower.includes('pass');
+                if (!isError) isError = lower.includes('error');
+                
+            } else {
+                // Handle other types
+                resultText = String(result.result);
+                const lower = resultText.toLowerCase();
+                isPass = lower.includes('pass');
+                isError = lower.includes('error');
+            }
+        }
+        
+        // Simple fallback for empty results
+        if (!resultText || resultText.trim() === '') {
+            resultText = 'No result data';
+        }
+        
+        console.log('Final result:', { resultText, isPass, isError });
+        
+        // Apply error result class if needed
+        if (isError) {
+            resultCard.classList.add('error-result');
+        }
+        
         // Add result status badge
-        const isPass = result.result && result.result.includes('pass');
         const statusBadge = document.createElement('span');
-        statusBadge.className = `result-status ${isPass ? 'status-pass' : 'status-fail'}`;
-        statusBadge.textContent = isPass ? 'PASS' : 'FAIL';
+        if (isError) {
+            statusBadge.className = 'result-status status-error';
+            statusBadge.textContent = 'ERROR';
+        } else if (isPass) {
+            statusBadge.className = 'result-status status-pass';
+            statusBadge.textContent = 'PASS';
+        } else {
+            statusBadge.className = 'result-status status-fail';
+            statusBadge.textContent = 'FAIL';
+        }
         resultCard.appendChild(statusBadge);
         
         // Add image (First, as per requirement)
@@ -443,7 +684,17 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const imageAccuracyValue = document.createElement('span');
             imageAccuracyValue.className = 'info-value';
-            imageAccuracyValue.textContent = result.image_accuracy ? `${(result.image_accuracy * 100).toFixed(1)}%` : 'N/A';
+            // Handle both numeric and string accuracy values
+            let accuracyDisplay = 'N/A';
+            if (result.image_accuracy !== undefined && result.image_accuracy !== null) {
+                const accuracy = parseFloat(result.image_accuracy);
+                if (!isNaN(accuracy)) {
+                    accuracyDisplay = `${(accuracy * 100).toFixed(1)}%`;
+                } else {
+                    accuracyDisplay = String(result.image_accuracy);
+                }
+            }
+            imageAccuracyValue.textContent = accuracyDisplay;
             
             imageAccuracyContainer.appendChild(imageAccuracyLabel);
             imageAccuracyContainer.appendChild(imageAccuracyValue);
@@ -463,7 +714,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const readValueContent = document.createElement('div');
             readValueContent.className = 'detail-box-content';
-            readValueContent.textContent = result.read_value || 'N/A';
+            // Handle null, undefined, and string "null" values
+            let readValueDisplay = 'N/A';
+            if (result.read_value !== undefined && result.read_value !== null && result.read_value !== 'null') {
+                readValueDisplay = String(result.read_value);
+            }
+            readValueContent.textContent = readValueDisplay;
             
             readValueContainer.appendChild(readValueLabel);
             readValueContainer.appendChild(readValueContent);
@@ -479,8 +735,21 @@ document.addEventListener('DOMContentLoaded', () => {
             resultValueLabel.textContent = 'Result';
             
             const resultValueContent = document.createElement('div');
-            resultValueContent.className = `detail-box-content ${isPass ? 'success-text' : 'error-text'}`;
-            resultValueContent.textContent = result.result ? result.result.join(', ') : 'N/A';
+            // Apply appropriate styling based on result type
+            let contentClass = 'detail-box-content';
+            if (isError) {
+                contentClass += ' error-text';
+            } else if (isPass) {
+                contentClass += ' success-text';
+            } else {
+                contentClass += ' error-text';
+            }
+            resultValueContent.className = contentClass;
+            
+            // Set the result text
+            resultValueContent.textContent = resultText;
+            
+            console.log('Setting result in UI:', resultText);
             
             resultValueContainer.appendChild(resultValueLabel);
             resultValueContainer.appendChild(resultValueContent);
@@ -508,12 +777,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const detailsContent = document.createElement('div');
             detailsContent.className = 'details-content';
             
-            // Add more details to collapsible section
+            // Add more details to collapsible section with better handling of values
             addDetailRow(detailsContent, 'Check Type', result.check_type || 'N/A');
-            addDetailRow(detailsContent, 'Data Accuracy', result.data_accuracy ? `${(result.data_accuracy * 100).toFixed(1)}%` : 'N/A');
+            
+            // Handle data accuracy similar to image accuracy
+            let dataAccuracyDisplay = 'N/A';
+            if (result.data_accuracy !== undefined && result.data_accuracy !== null) {
+                const dataAccuracy = parseFloat(result.data_accuracy);
+                if (!isNaN(dataAccuracy)) {
+                    dataAccuracyDisplay = `${(dataAccuracy * 100).toFixed(1)}%`;
+                } else {
+                    dataAccuracyDisplay = String(result.data_accuracy);
+                }
+            }
+            addDetailRow(detailsContent, 'Data Accuracy', dataAccuracyDisplay);
+            
             addDetailRow(detailsContent, 'Request ID', result.request_id || 'N/A');
             addDetailRow(detailsContent, 'User ID', result.user_id || 'N/A');
             addDetailRow(detailsContent, 'Dealer ID', result.dealer_id || 'N/A');
+            addDetailRow(detailsContent, 'Image Name', result.image_name || 'N/A');
+            addDetailRow(detailsContent, 'Image Location', result.image_location || 'N/A');
+            
+            // Add raw result data for debugging
+            addDetailRow(detailsContent, 'Raw Result Data', JSON.stringify(result.result) || 'N/A');
             
             additionalDetails.appendChild(expandBtn);
             additionalDetails.appendChild(detailsContent);
@@ -523,6 +809,52 @@ document.addEventListener('DOMContentLoaded', () => {
             resultCard.appendChild(detailsContainer);
             resultsContainer.appendChild(resultCard);
         };
+        
+        // Handle case where file reading might fail
+        reader.onerror = () => {
+            console.error('Error reading file for display');
+            // Still display the result even if image can't be read
+            const detailsContainer = document.createElement('div');
+            detailsContainer.className = 'result-details';
+            
+            const title = document.createElement('h3');
+            title.textContent = file.name;
+            title.title = result.request_id || '';
+            detailsContainer.appendChild(title);
+            
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'error-message';
+            errorMsg.textContent = 'Could not display image, but analysis results are available.';
+            detailsContainer.appendChild(errorMsg);
+            
+            // Add result details even without image
+            const resultValueContainer = document.createElement('div');
+            resultValueContainer.className = 'result-detail-box';
+            
+            const resultValueLabel = document.createElement('div');
+            resultValueLabel.className = 'detail-box-label';
+            resultValueLabel.textContent = 'Result';
+            
+            const resultValueContent = document.createElement('div');
+            let contentClass = 'detail-box-content';
+            if (isError) {
+                contentClass += ' error-text';
+            } else if (isPass) {
+                contentClass += ' success-text';
+            } else {
+                contentClass += ' error-text';
+            }
+            resultValueContent.className = contentClass;
+            resultValueContent.textContent = resultText;
+            
+            resultValueContainer.appendChild(resultValueLabel);
+            resultValueContainer.appendChild(resultValueContent);
+            detailsContainer.appendChild(resultValueContainer);
+            
+            resultCard.appendChild(detailsContainer);
+            resultsContainer.appendChild(resultCard);
+        };
+        
         reader.readAsDataURL(file);
     }
 
@@ -787,4 +1119,43 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize empty state
     updateEmptyState();
+    
+    // Simple test function for result parsing
+    window.testResults = function() {
+        console.log('=== Testing Result Processing ===');
+        
+        const testCases = [
+            { input: ["fail", "incorrect reg value"], expected: "fail, incorrect reg value", status: "FAIL" },
+            { input: ["pass"], expected: "pass", status: "PASS" },
+            { input: "fail", expected: "fail", status: "FAIL" },
+            { input: "pass", expected: "pass", status: "PASS" }
+        ];
+        
+        testCases.forEach((test, index) => {
+            console.log(`\nTest ${index + 1}:`);
+            console.log('Input:', test.input);
+            console.log('Expected:', test.expected, 'Status:', test.status);
+            
+            // Simple processing logic
+            let resultText = '';
+            let isPass = false;
+            
+            if (Array.isArray(test.input)) {
+                resultText = test.input.join(', ');
+                isPass = test.input.some(item => typeof item === 'string' && item.toLowerCase().includes('pass'));
+            } else if (typeof test.input === 'string') {
+                resultText = test.input;
+                isPass = test.input.toLowerCase().includes('pass');
+            }
+            
+            const actualStatus = isPass ? 'PASS' : 'FAIL';
+            const success = resultText === test.expected && actualStatus === test.status;
+            
+            console.log('Actual:', resultText, 'Status:', actualStatus);
+            console.log('✓ Test', success ? 'PASSED' : 'FAILED');
+        });
+        
+        console.log('\n=== Test your actual response ===');
+        console.log('Run: testResults() in console to verify the logic');
+    };
 }); 

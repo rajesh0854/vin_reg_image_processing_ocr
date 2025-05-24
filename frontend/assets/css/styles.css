@@ -935,6 +935,8 @@ button:disabled::before {
     z-index: 10;
     text-transform: uppercase;
     animation: fadeIn 0.5s ease forwards;
+    min-width: 60px;
+    text-align: center;
 }
 
 @keyframes fadeIn {
@@ -1011,6 +1013,7 @@ button:disabled::before {
     box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     position: relative;
     overflow: hidden;
+    background: rgba(255, 255, 255, 0.8);
 }
 
 .result-detail-box::before {
@@ -1047,23 +1050,29 @@ button:disabled::before {
 .detail-box-content {
     font-weight: 600;
     font-size: 1.2rem;
-    color: var(--text-color);
+    color: var(--text-color) !important;
     letter-spacing: 0.5px;
     word-break: break-all;
+    min-height: 1.2em;
+    position: relative;
 }
 
 .success-text {
-    color: var(--success-color);
-    background: linear-gradient(135deg, var(--success-color), #26c281);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #2ecc71 !important;
+    font-weight: 600;
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(38, 194, 129, 0.05));
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid rgba(46, 204, 113, 0.2);
 }
 
 .error-text {
-    color: var(--danger-color);
-    background: linear-gradient(135deg, var(--danger-color), #c0392b);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #ff4757 !important;
+    font-weight: 600;
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(255, 56, 56, 0.05));
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 71, 87, 0.2);
 }
 
 .additional-details {
@@ -1132,7 +1141,7 @@ button:disabled::before {
     width: 100%;
     height: 100%;
     background-color: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(8px);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1518,4 +1527,226 @@ button:disabled::before {
     0% { box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); }
     50% { box-shadow: 0 8px 25px rgba(67, 97, 238, 0.2); }
     100% { box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); }
+}
+
+/* Error Message Styling */
+.error-message {
+    background: linear-gradient(135deg, #ff4757, #ff3838);
+    color: white;
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 1rem 0;
+    font-weight: 500;
+    text-align: center;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.2);
+}
+
+/* Enhanced notification styles */
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 400px;
+}
+
+.notification {
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s ease, fadeIn 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.notification::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+.notification.success {
+    background: linear-gradient(135deg, #2ed573, #1dd1a1);
+    color: white;
+    border-left: 4px solid #00b894;
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #ff4757, #ff3838);
+    color: white;
+    border-left: 4px solid #e84393;
+}
+
+.notification.warning {
+    background: linear-gradient(135deg, #ffa502, #ff6348);
+    color: white;
+    border-left: 4px solid #fdcb6e;
+}
+
+.notification.info {
+    background: linear-gradient(135deg, #4361ee, #3742fa);
+    color: white;
+    border-left: 4px solid #2f3542;
+}
+
+.notification i {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Enhanced result status styling for error cases */
+.result-status.status-error {
+    background: linear-gradient(135deg, #ff4757, #ff3838);
+    color: white;
+    border: 2px solid rgba(255, 71, 87, 0.3);
+    animation: pulse-error 2s infinite;
+}
+
+@keyframes pulse-error {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4);
+    }
+    50% { 
+        box-shadow: 0 0 20px 5px rgba(255, 71, 87, 0.2);
+    }
+}
+
+/* Unknown result styling */
+.result-status.status-unknown {
+    background: linear-gradient(135deg, #95a5a6, #74b9ff);
+    color: white;
+    border: 2px solid rgba(116, 185, 255, 0.3);
+}
+
+/* Result card enhancements for different states */
+.result-card.error-result {
+    border: 2px solid rgba(255, 71, 87, 0.2);
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 1) 0%, 
+        rgba(255, 71, 87, 0.02) 100%);
+}
+
+.result-card.error-result:hover {
+    border-color: rgba(255, 71, 87, 0.4);
+    box-shadow: 0 15px 30px rgba(255, 71, 87, 0.1);
+}
+
+/* Show placeholder for empty results */
+.detail-box-content:empty::before {
+    content: 'No result data available';
+    color: var(--text-light);
+    font-style: italic;
+    font-weight: 400;
+}
+
+/* Debug information styling */
+.details-content .result-detail:last-child {
+    background: rgba(0, 0, 0, 0.02);
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    margin-top: 1rem;
+}
+
+.details-content .result-detail:last-child .label {
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+.details-content .result-detail:last-child .value {
+    color: var(--text-color);
+    font-weight: 400;
+    word-break: break-all;
+}
+
+/* Highlighting for important result data */
+.detail-box-content[data-original-result] {
+    border-left: 3px solid var(--primary-color);
+    padding-left: 0.8rem;
+}
+
+/* Force visibility for result content specifically */
+.result-detail-box .detail-box-content {
+    color: #2d3748 !important;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure result text is never hidden by any other CSS */
+.detail-box-content[data-processed-text] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 50px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Strong override for result display */
+.result-detail-box .detail-box-content:not(:empty) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Emergency fallback styling */
+.detail-box-content[data-emergency="true"] {
+    background: #ffebee !important;
+    border: 2px solid #f44336 !important;
+    color: #d32f2f !important;
+    font-weight: bold !important;
+    padding: 0.8rem !important;
+}
+
+/* Specific styling for pass results */
+.result-detail-box .detail-box-content.success-text {
+    color: #27ae60 !important;
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(39, 174, 96, 0.1));
+    border: 2px solid rgba(46, 204, 113, 0.3);
+    font-weight: bold;
+}
+
+/* Specific styling for fail results */
+.result-detail-box .detail-box-content.error-text {
+    color: #e74c3c !important;
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.1));
+    border: 2px solid rgba(231, 76, 60, 0.3);
+    font-weight: bold;
 } 
